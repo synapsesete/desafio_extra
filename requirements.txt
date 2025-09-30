@@ -1,0 +1,17 @@
+langchain-community
+langchain_decorators
+langchain
+langchain-experimental
+langchain-ollama
+langchain-openai
+langchain-google-genai
+langchainhub
+langsmith
+python-dotenv
+streamlit
+tabulate
+matplotlib
+scikit-learn
+seaborn
+black
+isort
