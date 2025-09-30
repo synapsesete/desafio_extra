@@ -33,7 +33,7 @@ class AgenteAnaliseDadosDataFrame:
                                                               suffix=self._load_suffix_prompt(),
                                                               extra_tools=[ferramentas.FetchTemporaryFilenameTool()],
                                                               include_df_in_prompt=None,
-                                                              handle_parsing_errors=True
+                                                              agent_executor_kwargs={"handle_parsing_errors": True}
                                                               )
                                                               
         self.__memory: Type[BaseChatMessageHistory] = chat_memory
@@ -91,7 +91,9 @@ class AgenteAnaliseDadosDataFrame:
         Invoca a pergunta ao agente, fazendo o parsing da string JSON retornada em seguida.
         """
         from stringutils import get_string_between_chars
-        output: str = self.__agent_executor.invoke({"input": question, "history": self.__memory.messages })['output']
+        response = self.__agent_executor.invoke({"input": question, "history": self.__memory.messages })
+        logger.debug("Agent Final Response: %s",response)
+        output: str = response['output']
         if output:
             json_content = get_string_between_chars(output,'{','}')
             if json_content:
