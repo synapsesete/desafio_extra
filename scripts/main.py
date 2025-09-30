@@ -1,7 +1,6 @@
 import logging
 import ui
 from langchain_community.chat_message_histories import StreamlitChatMessageHistory
-from langchain_community.callbacks.streamlit import StreamlitCallbackHandler
 from agente import AgenteAnaliseDadosDataFrame
 
 logging.basicConfig(

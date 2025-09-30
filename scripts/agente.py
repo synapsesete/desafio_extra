@@ -1,34 +1,26 @@
-import json
 import os
 import logging
 
 from typing import Type
 
-from dotenv import load_dotenv
-load_dotenv()
+from typing import Any
 
-from typing import List, Any
-
-from langchain.agents import AgentExecutor, create_react_agent
 from langchain_core.runnables.base import Runnable
-from langchain_experimental.tools.python.tool import PythonREPLTool
-from langchain.memory import ConversationBufferMemory
-from langchain_core.chat_history import BaseChatMessageHistory
-from langchain_core.callbacks import BaseCallbackHandler
+from langchain_core.chat_history import BaseChatMessageHistory,InMemoryChatMessageHistory
 from langchain_experimental.agents import create_pandas_dataframe_agent
 import pandas as pd
-from langchain_core.output_parsers import JsonOutputParser
 
-from langchain.callbacks import StreamlitCallbackHandler
 import ferramentas
 import schemas
 
 logger = logging.getLogger(__name__)
 
+from dotenv import load_dotenv
+load_dotenv()
 
 class AgenteAnaliseDadosDataFrame:
 
-    def __init__(self,df: Type[pd.DataFrame], chat_memory: Type[BaseChatMessageHistory]) -> None:
+    def __init__(self,df: Type[pd.DataFrame], chat_memory: Type[BaseChatMessageHistory] = InMemoryChatMessageHistory()) -> None:
         """
         Inicializar o Agente de análise de dados especializado em análise de dataframes Pandas passando para ele o texto de prompt do que deve ser feito.
         """
@@ -43,6 +35,8 @@ class AgenteAnaliseDadosDataFrame:
                                                               include_df_in_prompt=None,
                                                               handle_parsing_errors=True
                                                               )
+                                                              
+        self.__memory: Type[BaseChatMessageHistory] = chat_memory
 
 
     def _load_llm(self) -> Runnable:
@@ -70,7 +64,10 @@ class AgenteAnaliseDadosDataFrame:
         """
         from langchain_experimental.agents.agent_toolkits.pandas.prompt import PREFIX
         return PREFIX +"""
-                **Important**: Whenever before generating any kind of image with matplotlib, please retrieve the temporary directory path with appropriate filename in PNG format that the image will be saved."""
+                **Important**: 
+                  Whenever before generating any kind of image with matplotlib, please retrieve the temporary directory path with appropriate filename in PNG format that the image will be saved.
+                  If you generate more than 1 (one) graphic, please merge them in the same file.
+                """
     
     
     def _load_suffix_prompt(self) -> str:
@@ -79,6 +76,8 @@ class AgenteAnaliseDadosDataFrame:
         """
         from langchain_experimental.agents.agent_toolkits.pandas.prompt import SUFFIX_WITH_DF
         return """
+                Conversation history:
+                {history}
                 **Only** Final Answer JSON schema: 
                 {{
                   "answer": "string", // the final answer to the original input question in markdown,
@@ -92,14 +91,13 @@ class AgenteAnaliseDadosDataFrame:
         Invoca a pergunta ao agente, fazendo o parsing da string JSON retornada em seguida.
         """
         from stringutils import get_string_between_chars
-        output: str = self.__agent_executor.invoke({"input": question })['output']
+        output: str = self.__agent_executor.invoke({"input": question, "history": self.__memory.messages })['output']
         if output:
             json_content = get_string_between_chars(output,'{','}')
-            logger.info("json_content -> %s",json_content)
             if json_content:
                 answer: str = "{"+json_content+"}"
-                logger.info("Resposta -> %s",answer)
                 return schemas.RespostaFinal.model_validate_json(answer)    
             else:
                 return schemas.RespostaFinal(answer=output)
+        
     

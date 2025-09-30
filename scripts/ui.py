@@ -23,8 +23,7 @@ def carregar_dataframe_arquivo_submetido(arquivo) -> Type[pd.DataFrame]:
     """
     A partir de um caminho de arquivo CSV, retorna o dataframe carregado.
     """
-    if arquivo is not None: # and "filepath" not in st.session_state:
-        #apagar_historico_mensagens()
+    if arquivo is not None and "filepath" not in st.session_state:
         from tempfile import NamedTemporaryFile
         suffix = fileutils.suffix(arquivo.name)
         with NamedTemporaryFile(suffix=suffix) as temp:
@@ -36,8 +35,8 @@ def carregar_dataframe_arquivo_submetido(arquivo) -> Type[pd.DataFrame]:
             else:
                arquivo_csv = temp.name
             df = pd.read_csv(arquivo_csv)
-            __exibir_mensagem_chat("assistant","O dataframe foi carregado com sucesso!")
-            st.dataframe(df)
+            __exibir_mensagem_chat("assistant","O dataframe foi carregado com sucesso. Seguem as primeiras linhas...")
+            st.dataframe(df.head())
             return df
 
 def exibir_historico_mensagens():
@@ -71,7 +70,10 @@ def exibir_resposta_agente(agente: Runnable, prompt: str) -> None:
                 st.write(response.answer)
                 __adicionar_mensagem_chat("assistant",response.answer)
                 if response.image:
-                    st.image(response.image.strip())
+                    try:
+                        st.image(response.image.strip())
+                    except FileNotFoundError as fnfe:
+                        st.write(fnfe)
 
 def __exibir_mensagem_chat(role:str,msg:str) -> None:
     with st.chat_message(role):
@@ -79,5 +81,5 @@ def __exibir_mensagem_chat(role:str,msg:str) -> None:
 
 def __adicionar_mensagem_chat(role:str,msg:str) -> None:
     if "messages" not in st.session_state:
-        st.session_state.messages = []
+        apagar_historico_mensagens()
     st.session_state.messages.append({"role": role, "content": msg})
