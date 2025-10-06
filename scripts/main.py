@@ -2,6 +2,7 @@ import logging
 import ui
 from langchain_community.chat_message_histories import StreamlitChatMessageHistory
 from agente import AgenteAnaliseDadosDataFrame
+import streamlit as st
 
 logging.basicConfig(
     level=logging.INFO,

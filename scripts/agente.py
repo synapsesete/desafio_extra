@@ -20,12 +20,12 @@ load_dotenv()
 
 class AgenteAnaliseDadosDataFrame:
 
-    def __init__(self,df: Type[pd.DataFrame], chat_memory: Type[BaseChatMessageHistory] = InMemoryChatMessageHistory()) -> None:
+    def __init__(self,df: Type[pd.DataFrame], chat_memory: Type[BaseChatMessageHistory] = InMemoryChatMessageHistory(), api_key: str = os.environ.get("GOOGLE_API_KEY")) -> None:
         """
         Inicializar o Agente de análise de dados especializado em análise de dataframes Pandas passando para ele o texto de prompt do que deve ser feito.
         """
 
-        self.__agent_executor = create_pandas_dataframe_agent(llm=self._load_llm(),
+        self.__agent_executor = create_pandas_dataframe_agent(llm=self._load_llm(api_key),
                                                               df = df,
                                                               verbose=True,
                                                               allow_dangerous_code=True,
@@ -39,14 +39,14 @@ class AgenteAnaliseDadosDataFrame:
         self.__memory: Type[BaseChatMessageHistory] = chat_memory
 
 
-    def _load_llm(self) -> Runnable:
+    def _load_llm(self,api_key:str) -> Runnable:
         """
         Carrega e retorna a LLM do Agente.
         """
         from langchain_google_genai import ChatGoogleGenerativeAI
         from langchain_ollama import ChatOllama
 
-        if os.environ.get("GOOGLE_API_KEY"):
+        if api_key:
             llm = ChatGoogleGenerativeAI(model=os.environ["LLM_MODEL"], temperature=0)
         else:
             llm = ChatOllama(
@@ -64,6 +64,7 @@ class AgenteAnaliseDadosDataFrame:
         """
         from langchain_experimental.agents.agent_toolkits.pandas.prompt import PREFIX
         return PREFIX +"""
+                If you have any command to run, please run it.
                 **Important**: 
                   Whenever before generating any kind of image with matplotlib, please retrieve the temporary directory path with appropriate filename in PNG format that the image will be saved.
                   If you generate more than 1 (one) graphic, please merge them in the same file.

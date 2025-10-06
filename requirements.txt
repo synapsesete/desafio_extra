@@ -13,5 +13,8 @@ tabulate
 matplotlib
 scikit-learn
 seaborn
+imblearn
+openpyxl
+reportlab
 black
 isort

@@ -14,14 +14,14 @@ logger = logging.getLogger(__name__)
 
 def exibir_file_uloader():
     """
-    Exibe o widget para subir o arquivo para análise. Pode ser zipado contanto que possua um arquivo em formato CSV.
+    Exibe o widget para subir o arquivo para análise. Pode ser zipado contanto que possua um arquivo em formato CSV ou Excel
     """
-    return st.file_uploader("Submeta seu arquivo aqui", type=["csv", "zip"])
+    return st.file_uploader("Submeta seu arquivo aqui", type=["csv", "zip","xls","xlsx"])
 
 
 def carregar_dataframe_arquivo_submetido(arquivo) -> Type[pd.DataFrame]:
     """
-    A partir de um caminho de arquivo CSV, retorna o dataframe carregado.
+    A partir de um caminho de arquivo CSV ou Excel, retorna o dataframe carregado.
     """
     if arquivo is not None and "filepath" not in st.session_state:
         from tempfile import NamedTemporaryFile
@@ -29,12 +29,16 @@ def carregar_dataframe_arquivo_submetido(arquivo) -> Type[pd.DataFrame]:
         with NamedTemporaryFile(suffix=suffix) as temp:
             temp.write(arquivo.getvalue())
             if suffix == ".zip":
-               arquivos_csvs_descompactados = [filenamecsv for filenamecsv in fileutils.descompactar_arquivo(temp.name) if fileutils.suffix(filenamecsv)==".csv"]
-               assert len(arquivos_csvs_descompactados) == 1
-               arquivo_csv = arquivos_csvs_descompactados[0]
+               arquivos_descompactados = [filename for filename in fileutils.descompactar_arquivo(temp.name) if fileutils.suffix(filename)==".csv" or ".xls" in fileutils.suffix(filename)]
+               assert len(arquivos_descompactados) == 1
+               arquivo_planilha = arquivos_descompactados[0]
             else:
-               arquivo_csv = temp.name
-            df = pd.read_csv(arquivo_csv)
+               arquivo_planilha = temp.name
+
+            if ".xls" in suffix:
+                df = pd.read_excel(arquivo_planilha)
+            else:
+                df = pd.read_csv(arquivo_planilha)
             __exibir_mensagem_chat("assistant","O dataframe foi carregado com sucesso. Seguem as primeiras linhas...")
             st.dataframe(df.head())
             return df

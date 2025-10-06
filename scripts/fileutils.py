@@ -4,10 +4,10 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
+
+
 def suffix(filename: str) -> str:
     return Path(filename).suffix.lower().strip()
-
-
 
 def descompactar_arquivo(filename,diretorio_destino=None) -> List[str]:
     import zipfile
