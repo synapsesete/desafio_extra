@@ -84,6 +84,8 @@ class AgenteAnaliseDadosDataFrame:
                   "answer": "string", // the final answer to the original input question in markdown,
                   "image": "string"  // the optional path of generated image if generated.
                 }}
+                If you do not know the answer, just say that you do not know the answer.
+                Only answer questions related to the data context.
                """  + SUFFIX_WITH_DF
 
 
