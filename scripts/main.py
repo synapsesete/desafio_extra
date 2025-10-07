@@ -18,17 +18,25 @@ def main():
 
     if arquivo_submetido:
 
-        df = ui.carregar_dataframe_arquivo_submetido(arquivo_submetido)
+        try: 
 
-        agente = AgenteAnaliseDadosDataFrame(df,StreamlitChatMessageHistory(key="messages"))
+            df = ui.carregar_dataframe_arquivo_submetido(arquivo_submetido)
 
-        ui.exibir_historico_mensagens()
+            agente = AgenteAnaliseDadosDataFrame(df,StreamlitChatMessageHistory(key="messages"))
 
-        if input := ui.exibir_chat_input():
+            ui.exibir_historico_mensagens()
 
-            ui.exibir_pergunta_usuario(input)
+            if input := ui.exibir_chat_input():
 
-            ui.exibir_resposta_agente(agente,input)
+                ui.exibir_pergunta_usuario(input)
+
+                ui.exibir_resposta_agente(agente,input)
+
+
+        except ValueError as e:
+            
+            ui.exibir_mensagem_erro(str(e))
+
     
 
 if __name__ == "__main__":

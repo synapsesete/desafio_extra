@@ -1,4 +1,4 @@
-from typing import Any, Type
+from typing import Any, Type, Optional
 import streamlit as st
 import logging
 import fileutils
@@ -19,6 +19,10 @@ def exibir_file_uloader():
     return st.file_uploader("Submeta seu arquivo aqui", type=["csv", "zip","xls","xlsx"])
 
 
+def exibir_mensagem_erro(msg:str):
+    st.error(msg, icon=None, width="stretch")
+
+
 def carregar_dataframe_arquivo_submetido(arquivo) -> Type[pd.DataFrame]:
     import os
     """
@@ -31,20 +35,27 @@ def carregar_dataframe_arquivo_submetido(arquivo) -> Type[pd.DataFrame]:
             temp.write(arquivo.getvalue())
             dest_temp_dir = os.path.join(os.path.dirname(temp.name),"desafio_extra")
             try:
+                arquivo_planilha = None
                 if suffix == ".zip":
                     arquivos_descompactados = [filename for filename in fileutils.descompactar_arquivo(temp.name,dest_temp_dir) if fileutils.suffix(filename)==".csv" or ".xls" in fileutils.suffix(filename)]
-                    assert len(arquivos_descompactados) == 1
-                    arquivo_planilha = arquivos_descompactados[0]
+                    if len(arquivos_descompactados) == 1:
+                        arquivo_planilha = arquivos_descompactados[0]
+                    else:
+                        raise ValueError("Não foi possível localizar uma planilha em formato CSV ou Excel no arquivo submetido!")
                 else:
                     arquivo_planilha = temp.name
 
-                if ".xls" in suffix:
-                    df = pd.read_excel(arquivo_planilha)
-                else:
-                    df = pd.read_csv(arquivo_planilha)
-                __exibir_mensagem_chat("assistant","O dataframe foi carregado com sucesso. Seguem as primeiras linhas...")
-                st.dataframe(df.head())
-                return df
+                if arquivo_planilha:
+                    if ".xls" in suffix:
+                        df = pd.read_excel(arquivo_planilha)
+                    else:
+                        df = pd.read_csv(arquivo_planilha)
+                    __exibir_mensagem_chat("assistant","O dataframe foi carregado com sucesso. Seguem as primeiras linhas...")
+                    st.dataframe(df.head())
+                   # st.session_state.filepath = arquivo_planilha
+                    
+                    return df
+                
             finally:
                 if os.path.isdir(dest_temp_dir):
                     import shutil
