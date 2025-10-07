@@ -20,6 +20,7 @@ def exibir_file_uloader():
 
 
 def carregar_dataframe_arquivo_submetido(arquivo) -> Type[pd.DataFrame]:
+    import os
     """
     A partir de um caminho de arquivo CSV ou Excel, retorna o dataframe carregado.
     """
@@ -28,20 +29,28 @@ def carregar_dataframe_arquivo_submetido(arquivo) -> Type[pd.DataFrame]:
         suffix = fileutils.suffix(arquivo.name)
         with NamedTemporaryFile(suffix=suffix) as temp:
             temp.write(arquivo.getvalue())
-            if suffix == ".zip":
-               arquivos_descompactados = [filename for filename in fileutils.descompactar_arquivo(temp.name) if fileutils.suffix(filename)==".csv" or ".xls" in fileutils.suffix(filename)]
-               assert len(arquivos_descompactados) == 1
-               arquivo_planilha = arquivos_descompactados[0]
-            else:
-               arquivo_planilha = temp.name
+            dest_temp_dir = os.path.join(os.path.dirname(temp.name),"desafio_extra")
+            try:
+                if suffix == ".zip":
+                    arquivos_descompactados = [filename for filename in fileutils.descompactar_arquivo(temp.name,dest_temp_dir) if fileutils.suffix(filename)==".csv" or ".xls" in fileutils.suffix(filename)]
+                    assert len(arquivos_descompactados) == 1
+                    arquivo_planilha = arquivos_descompactados[0]
+                else:
+                    arquivo_planilha = temp.name
 
-            if ".xls" in suffix:
-                df = pd.read_excel(arquivo_planilha)
-            else:
-                df = pd.read_csv(arquivo_planilha)
-            __exibir_mensagem_chat("assistant","O dataframe foi carregado com sucesso. Seguem as primeiras linhas...")
-            st.dataframe(df.head())
-            return df
+                if ".xls" in suffix:
+                    df = pd.read_excel(arquivo_planilha)
+                else:
+                    df = pd.read_csv(arquivo_planilha)
+                __exibir_mensagem_chat("assistant","O dataframe foi carregado com sucesso. Seguem as primeiras linhas...")
+                st.dataframe(df.head())
+                return df
+            finally:
+                if os.path.isdir(dest_temp_dir):
+                    import shutil
+                    logger.info("Cleaning up temporary directory %s...",dest_temp_dir)
+                    shutil.rmtree(dest_temp_dir)
+
 
 def exibir_historico_mensagens():
     """
